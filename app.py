@@ -113,11 +113,11 @@ st.markdown("<br>", unsafe_allow_html=True)
 
 # --- Sidebar : paramètres ---
 with st.sidebar:
-    st.image("https://img.icons8.com/clouds/100/quiz.png", width=80)
+    st.markdown("<div style='text-align:center; font-size:3rem;'>🧠</div>", unsafe_allow_html=True)
     st.header("⚙️ Paramètres")
     st.markdown("---")
     num_questions = st.slider("🔢 Nombre de questions", min_value=3, max_value=20, value=5)
-    difficulty = st.selectbox("📊 Niveau de difficulté", ["facile", "moyen", "difficile"])
+    difficulty = st.radio("📊 Niveau de difficulté", ["facile", "moyen", "difficile"], index=0)
     st.markdown("---")
     st.markdown("💡 *Powered by AI open source*")
 
@@ -160,9 +160,56 @@ if uploaded_file is not None:
     if st.button("🚀 Générer le QCM", type="primary"):
         with st.spinner("Génération des questions en cours..."):
             try:
-                qcm = generate_qcm(text, num_questions=num_questions, difficulty=difficulty)
-                st.divider()
-                st.subheader("📋 QCM Généré")
-                st.markdown(qcm)
+                from generator import generate_qcm_structured
+                questions = generate_qcm_structured(text, num_questions=num_questions, difficulty=difficulty)
+                st.session_state["questions"] = questions
+                st.session_state["validated"] = False
+                st.rerun()
             except Exception as e:
                 st.error(f"Erreur lors de la génération : {e}")
+
+    # --- Affichage interactif du QCM ---
+    if "questions" in st.session_state and st.session_state["questions"]:
+        st.divider()
+        st.subheader("📋 QCM - Cochez vos réponses")
+        questions = st.session_state["questions"]
+        user_answers = {}
+
+        for i, q in enumerate(questions):
+            st.markdown(f"**Question {i+1} :** {q['question']}")
+            options = q["options"]
+            user_answers[i] = st.radio(
+                f"Votre réponse (Q{i+1})",
+                options,
+                key=f"q_{i}",
+                index=None,
+                label_visibility="collapsed"
+            )
+            st.markdown("---")
+
+        if st.button("✅ Valider mes réponses", type="primary"):
+            st.session_state["validated"] = True
+
+        if st.session_state.get("validated"):
+            score = 0
+            st.subheader("📊 Résultats")
+            for i, q in enumerate(questions):
+                correct_letter = q["correct"]
+                correct_option = next((o for o in q["options"] if o.startswith(correct_letter)), "")
+                user_choice = user_answers.get(i, "")
+                is_correct = user_choice == correct_option if user_choice else False
+                if is_correct:
+                    score += 1
+                    st.success(f"✅ Question {i+1} : Correct !")
+                else:
+                    st.error(f"❌ Question {i+1} : Mauvaise réponse. La bonne réponse était : **{correct_option}**")
+                st.info(f"💡 {q['explanation']}")
+            st.markdown(f"### 🏆 Score : {score}/{len(questions)}")
+            percentage = (score / len(questions)) * 100
+            if percentage >= 80:
+                st.balloons()
+                st.success(f"Excellent ! {percentage:.0f}% de bonnes réponses !")
+            elif percentage >= 50:
+                st.warning(f"Pas mal ! {percentage:.0f}% de bonnes réponses.")
+            else:
+                st.error(f"À revoir... {percentage:.0f}% de bonnes réponses.")

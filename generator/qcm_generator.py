@@ -1,5 +1,7 @@
 from groq import Groq
 from config import GROQ_API_KEY
+import json
+import re
 
 
 def _build_prompt(text: str, num_questions: int, difficulty: str) -> str:
@@ -28,6 +30,25 @@ Texte source :
 """
 
 
+def _build_structured_prompt(text: str, num_questions: int, difficulty: str) -> str:
+    """Construit le prompt pour obtenir un JSON structuré."""
+    return f"""À partir du texte suivant, génère exactement {num_questions} questions à choix multiples (QCM) de niveau {difficulty}.
+
+IMPORTANT : Réponds UNIQUEMENT avec un JSON valide, sans texte avant ni après. Le format doit être exactement :
+[
+  {{
+    "question": "La question ici",
+    "options": ["A) option1", "B) option2", "C) option3", "D) option4"],
+    "correct": "A",
+    "explanation": "Explication courte"
+  }}
+]
+
+Texte source :
+{text}
+"""
+
+
 def _generate_with_groq(prompt: str) -> str:
     """Génération via Groq (gratuit avec limites)."""
     client = Groq(api_key=GROQ_API_KEY)
@@ -47,9 +68,25 @@ def _generate_with_groq(prompt: str) -> str:
 
 
 def generate_qcm(text: str, num_questions: int = 5, difficulty: str = "moyen") -> str:
-    """
-    Génère des questions à choix multiples à partir d'un texte donné
-    en utilisant Groq (IA gratuite).
-    """
+    """Génère des QCM en texte brut."""
     prompt = _build_prompt(text, num_questions, difficulty)
     return _generate_with_groq(prompt)
+
+
+def generate_qcm_structured(text: str, num_questions: int = 5, difficulty: str = "moyen") -> list:
+    """Génère des QCM sous forme de liste de dictionnaires."""
+    prompt = _build_structured_prompt(text, num_questions, difficulty)
+    response = _generate_with_groq(prompt)
+
+    # Essayer d'extraire le JSON de la réponse
+    try:
+        # Chercher un tableau JSON dans la réponse
+        json_match = re.search(r'\[.*\]', response, re.DOTALL)
+        if json_match:
+            questions = json.loads(json_match.group())
+        else:
+            questions = json.loads(response)
+        return questions
+    except json.JSONDecodeError:
+        # Fallback : réessayer avec un prompt plus strict
+        raise ValueError("L'IA n'a pas retourné un format valide. Veuillez réessayer.")

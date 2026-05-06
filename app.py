@@ -201,9 +201,8 @@ if uploaded_file is not None:
                     score += 1
                     st.success(f"✅ Question {i+1} : Correct !")
                 else:
-                    correct_display = ", ".join(correct_options)
-                    st.error(f"❌ Question {i+1} : Mauvaise réponse.")
-                    st.markdown(f"➡️ Bonne(s) réponse(s) : **{correct_display}**")
+                    correct_display = ", ".join(correct_letters)
+                    st.error(f"❌ Question {i+1} : Mauvaise réponse. Bonne(s) réponse(s) : **{correct_display}**")
                 st.info(f"💡 {q['explanation']}")
             st.markdown(f"### 🏆 Score : {score}/{len(questions)}")
             percentage = (score / len(questions)) * 100

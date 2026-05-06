@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # 📝 Générateur de QCM
 
 Application web qui génère automatiquement des Questions à Choix Multiples (QCM) à partir de documents PDF, Word ou images.
@@ -47,3 +48,7 @@ L'application sera accessible sur http://localhost:8501
 2. Ajustez les paramètres (nombre de questions, difficulté)
 3. Cliquez sur "Générer le QCM"
 4. Consultez les questions générées avec les réponses et explications
+=======
+# generateur-qcm
+générateur QCM en se basant sur des ressources PDF , DOCX , ou Image 
+>>>>>>> 1bba4016e276550c3fe816dcff4e97c768f85ede

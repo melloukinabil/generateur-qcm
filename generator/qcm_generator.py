@@ -34,13 +34,19 @@ def _build_structured_prompt(text: str, num_questions: int, difficulty: str) -> 
     """Construit le prompt pour obtenir un JSON structuré."""
     return f"""À partir du texte suivant, génère exactement {num_questions} questions à choix multiples (QCM) de niveau {difficulty}.
 
+Règles importantes :
+- Certaines questions peuvent avoir plusieurs bonnes réponses
+- N'utilise JAMAIS de caractères spéciaux comme des étoiles (*), des tirets ou du markdown
+- Les textes doivent être en texte brut simple
+- Le champ "correct" contient la ou les lettres correctes séparées par des virgules (ex: "A" ou "A, C")
+
 IMPORTANT : Réponds UNIQUEMENT avec un JSON valide, sans texte avant ni après. Le format doit être exactement :
 [
   {{
-    "question": "La question ici",
+    "question": "La question ici en texte simple",
     "options": ["A) option1", "B) option2", "C) option3", "D) option4"],
     "correct": "A",
-    "explanation": "Explication courte"
+    "explanation": "Explication courte en texte simple sans etoiles ni caracteres speciaux"
   }}
 ]
 

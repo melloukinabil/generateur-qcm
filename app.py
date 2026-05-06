@@ -173,18 +173,12 @@ if uploaded_file is not None:
         st.divider()
         st.subheader("📋 QCM - Cochez vos réponses")
         questions = st.session_state["questions"]
-        user_answers = {}
 
         for i, q in enumerate(questions):
             st.markdown(f"**Question {i+1} :** {q['question']}")
             options = q["options"]
-            user_answers[i] = st.radio(
-                f"Votre réponse (Q{i+1})",
-                options,
-                key=f"q_{i}",
-                index=None,
-                label_visibility="collapsed"
-            )
+            for j, opt in enumerate(options):
+                st.checkbox(opt, key=f"q_{i}_opt_{j}")
             st.markdown("---")
 
         if st.button("✅ Valider mes réponses", type="primary"):
@@ -194,15 +188,22 @@ if uploaded_file is not None:
             score = 0
             st.subheader("📊 Résultats")
             for i, q in enumerate(questions):
-                correct_letter = q["correct"]
-                correct_option = next((o for o in q["options"] if o.startswith(correct_letter)), "")
-                user_choice = user_answers.get(i, "")
-                is_correct = user_choice == correct_option if user_choice else False
+                options = q["options"]
+                # Récupérer les réponses correctes (peut être multiple)
+                correct_letters = [c.strip() for c in q["correct"].split(",")]
+                correct_options = [o for o in options if any(o.startswith(cl) for cl in correct_letters)]
+
+                # Récupérer les choix de l'utilisateur
+                user_selected = [options[j] for j in range(len(options)) if st.session_state.get(f"q_{i}_opt_{j}", False)]
+
+                is_correct = set(user_selected) == set(correct_options)
                 if is_correct:
                     score += 1
                     st.success(f"✅ Question {i+1} : Correct !")
                 else:
-                    st.error(f"❌ Question {i+1} : Mauvaise réponse. La bonne réponse était : **{correct_option}**")
+                    correct_display = ", ".join(correct_options)
+                    st.error(f"❌ Question {i+1} : Mauvaise réponse.")
+                    st.markdown(f"➡️ Bonne(s) réponse(s) : **{correct_display}**")
                 st.info(f"💡 {q['explanation']}")
             st.markdown(f"### 🏆 Score : {score}/{len(questions)}")
             percentage = (score / len(questions)) * 100
@@ -212,4 +213,4 @@ if uploaded_file is not None:
             elif percentage >= 50:
                 st.warning(f"Pas mal ! {percentage:.0f}% de bonnes réponses.")
             else:
-                st.error(f"À revoir... {percentage:.0f}% de bonnes réponses.")
+                st.error(f"A revoir... {percentage:.0f}% de bonnes réponses.")
